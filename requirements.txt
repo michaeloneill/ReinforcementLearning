@@ -9,3 +9,5 @@ JSAnimation
 psutil
 atari-py
 ffmpeg-python
+jupyter
+keras
