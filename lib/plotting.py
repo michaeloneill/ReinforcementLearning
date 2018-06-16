@@ -1,103 +1,69 @@
 import matplotlib
 import numpy as np
 import pandas as pd
-from collections import namedtuple
 from matplotlib import pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
-EpisodeStats = namedtuple("Stats",["episode_lengths", "episode_rewards"])
-
-def plot_cost_to_go_mountain_car(env, estimator, num_tiles=50):
+def plot_cost_to_go(env, estimator, num_tiles=50):
+    
     x = np.linspace(env.observation_space.low[0], env.observation_space.high[0], num=num_tiles)
     y = np.linspace(env.observation_space.low[1], env.observation_space.high[1], num=num_tiles)
     X, Y = np.meshgrid(x, y)
-    Z = np.apply_along_axis(lambda _: -np.max(estimator.predict(_)), 2, np.dstack([X, Y]))
+    Z = np.apply_along_axis(
+        lambda x, y: -np.max(estimator.predict([x, y])), 2, np.stack([X, Y], axis=2))
 
-    fig = plt.figure(figsize=(10, 5))
-    #ax = fig.add_subplot(111, projection='3d')
-    #surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
-    #                       cmap=matplotlib.cm.coolwarm, vmin=-1.0, vmax=1.0)
-    ax = fig.add_subplot(111)
+    fig, ax = plt.subplots(figsize=(10, 5))
     p = ax.pcolor(X, Y, Z, cmap=cm.RdBu, vmin=0, vmax=200)
-    cb = fig.colorbar(p)
 
     ax.set_xlabel('Position')
     ax.set_ylabel('Velocity')
-    #ax.set_zlabel('Value')
-    ax.set_title("Mountain \"Cost To Go\" Function")
-    #fig.colorbar(surf)
+    ax.set_title("\"Cost To Go\" Function")
+    fig.colorbar(p)
+    plt.show()
+    
+
+def plot_learning_curves(stats, smoothing_window=10):
+    
+    plt.figure(figsize=(10,5))
+    for algo, steps_per_episode in stats.items():
+        plt.figure(figsize=(10,5))
+        steps_per_episode = pd.Series(steps_per_episode).rolling(
+            smoothing_window).mean()  # smooth
+        plt.plot(steps_per_episode, label=algo)
+    plt.xlabel("Episode")
+    plt.ylabel("Steps")
+    plt.title("Steps per Episode")
+    plt.legend()
     plt.show()
 
 
-def plot_value_function(V, title="Value Function"):
-    """
-    Plots the value function as a surface plot.
-    """
-    min_x = min(k[0] for k in V.keys())
-    max_x = max(k[0] for k in V.keys())
-    min_y = min(k[1] for k in V.keys())
-    max_y = max(k[1] for k in V.keys())
+def run_grid_search(algorithm, estimator, alphas, bootstrappings, episodes=100, runs=5,
+                    truncate_steps=400, bootstrapping_descriptor='bootstrapping'):
+    
+    estimator.reset()
+    steps = np.zeros((len(bootstrappings), len(alphas)))
+    for run in range(0, runs):
+        for b_idx, bootstrapping in enumerate(bootstrappings):
+            for a_idx, alpha in enumerate(alphas):
+                for episode in range(episodes):
+                    print(
+                        '\r run: {}, {}: {}, alpha: {}, episode: {}'.format(
+                            run, bootstrapping_descriptor, 
+                            bootstrapping, alpha, episode), end="")
+                    n_steps, _ = algorithm(bootstrapping, env=env, estimator=estimator)
+                    steps[lmbdaIndex, alphaIndex] += n_steps
+    
+    # average over independent runs and episodes
+    steps /= runs * episodes
+    
+    # truncate high step values for better display
+    steps[steps > truncate_steps] = truncate_steps
 
-    x_range = np.arange(min_x, max_x + 1)
-    y_range = np.arange(min_y, max_y + 1)
-    X, Y = np.meshgrid(x_range, y_range)
-
-    # Find value for all (x, y) coordinates
-    Z_noace = np.apply_along_axis(lambda _: V[(_[0], _[1], False)], 2, np.dstack([X, Y]))
-    Z_ace = np.apply_along_axis(lambda _: V[(_[0], _[1], True)], 2, np.dstack([X, Y]))
-
-    def plot_surface(X, Y, Z, title):
-        fig = plt.figure(figsize=(20, 10))
-        ax = fig.add_subplot(111, projection='3d')
-        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1,
-                               cmap=matplotlib.cm.coolwarm, vmin=-1.0, vmax=1.0)
-        ax.set_xlabel('Player Sum')
-        ax.set_ylabel('Dealer Showing')
-        ax.set_zlabel('Value')
-        ax.set_title(title)
-        ax.view_init(ax.elev, -120)
-        fig.colorbar(surf)
-        plt.show()
-
-    plot_surface(X, Y, Z_noace, "{} (No Usable Ace)".format(title))
-    plot_surface(X, Y, Z_ace, "{} (Usable Ace)".format(title))
-
-
-
-def plot_episode_stats(stats, smoothing_window=10, noshow=False):
-    # Plot the episode length over time
-    fig1 = plt.figure(figsize=(10,5))
-    plt.plot(stats.episode_lengths)
-    plt.xlabel("Episode")
-    plt.ylabel("Episode Length")
-    plt.title("Episode Length over Time")
-    if noshow:
-        plt.close(fig1)
-    else:
-        plt.show(fig1)
-
-    # Plot the episode reward over time
-    fig2 = plt.figure(figsize=(10,5))
-    rewards_smoothed = pd.Series(stats.episode_rewards).rolling(smoothing_window, min_periods=smoothing_window).mean()
-    plt.plot(rewards_smoothed)
-    plt.xlabel("Episode")
-    plt.ylabel("Episode Reward (Smoothed)")
-    plt.title("Episode Reward over Time (Smoothed over window size {})".format(smoothing_window))
-    if noshow:
-        plt.close(fig2)
-    else:
-        plt.show(fig2)
-
-    # Plot time steps and episode number
-    fig3 = plt.figure(figsize=(10,5))
-    plt.plot(np.cumsum(stats.episode_lengths), np.arange(len(stats.episode_lengths)))
-    plt.xlabel("Time Steps")
-    plt.ylabel("Episode")
-    plt.title("Episode per time step")
-    if noshow:
-        plt.close(fig3)
-    else:
-        plt.show(fig3)
-
-    return fig1, fig2, fig3
+    plt.figure()
+    for b_idx in range(len(bootstrappings):
+        plt.plot(alphas, steps[b_idx, :], 
+            label='{}: {}'.format(boostrapping_destriptor, bootstrappings[b_idx]))
+    plt.xlabel('alpha * number of tilings(8)')
+    plt.ylabel('Average steps per episode')
+    plt.ylim(140, truncate_steps - 100)
+    plt.legend()
