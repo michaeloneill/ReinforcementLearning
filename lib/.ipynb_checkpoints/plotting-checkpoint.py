@@ -22,10 +22,10 @@ def plot_cost_to_go(env, estimator, num_tiles=50):
     plt.show()
     
 
-def plot_learning_curves(stats, smoothing_window=10):
+def plot_learning_curves(steps, smoothing_window=10):
     
     plt.figure(figsize=(10,5))
-    for algo, steps_per_episode in stats.items():
+    for algo, steps_per_episode in steps.items():
         steps_per_episode = pd.Series(steps_per_episode).rolling(
             smoothing_window).mean()  # smooth
         plt.plot(steps_per_episode, label=algo)
@@ -34,36 +34,3 @@ def plot_learning_curves(stats, smoothing_window=10):
     plt.title("Steps per Episode")
     plt.legend()
     plt.show()
-
-
-def run_grid_search(algorithm, env, alphas, bootstrappings, episodes=100, runs=5,
-                    truncate_length=400, trace=False):
-    
-    bootstrapping_type = 'lambda' if trace else 'n-step'
-    lengths = np.zeros((len(bootstrappings), len(alphas)))
-    for run in range(runs):
-        for b_idx, bootstrapping in enumerate(bootstrappings):
-            for a_idx, alpha in enumerate(alphas):
-                estimator = Estimator(alpha=alpha, trace=trace)
-                for episode in range(episodes):
-                    print(
-                        '\r run: {}, {}: {}, alpha: {}, episode: {}'.format(
-                            run, bootstrapping_type, 
-                            bootstrapping, alpha, episode), end="")
-                    episode_length, _ = algorithm(bootstrapping, env=env, estimator=estimator)
-                    lengths[b_idx, a_idx] += episode_length
-    
-    # average over independent runs and episodes
-    lengths /= runs * episodes
-    
-    # truncate high step values for better display
-    lengths[lengths > truncate_length] = truncate_length
-
-    plt.figure()
-    for b_idx in range(len(bootstrappings)):
-        plt.plot(alphas, lengths[b_idx, :], 
-            label='{}: {}'.format(boostrapping_type, bootstrappings[b_idx]))
-    plt.xlabel('alpha * number of tilings(8)')
-    plt.ylabel('Average steps per episode')
-    plt.ylim(140, truncate_length - 100)
-    plt.legend()

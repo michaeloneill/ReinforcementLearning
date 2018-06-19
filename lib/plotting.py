@@ -22,10 +22,10 @@ def plot_cost_to_go(env, estimator, num_tiles=50):
     plt.show()
     
 
-def plot_learning_curves(stats, smoothing_window=10):
+def plot_learning_curves(steps, smoothing_window=10):
     
     plt.figure(figsize=(10,5))
-    for algo, steps_per_episode in stats.items():
+    for algo, steps_per_episode in steps.items():
         steps_per_episode = pd.Series(steps_per_episode).rolling(
             smoothing_window).mean()  # smooth
         plt.plot(steps_per_episode, label=algo)
