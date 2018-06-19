@@ -36,33 +36,34 @@ def plot_learning_curves(stats, smoothing_window=10):
     plt.show()
 
 
-def run_grid_search(algorithm, estimator, env, alphas, bootstrappings, episodes=100, runs=5,
-                    truncate_steps=400, bootstrapping_descriptor='bootstrapping'):
+def run_grid_search(algorithm, env, alphas, bootstrappings, episodes=100, runs=5,
+                    truncate_length=400, trace=False):
     
-    estimator.reset()
-    steps = np.zeros((len(bootstrappings), len(alphas)))
+    bootstrapping_type = 'lambda' if trace else 'n-step'
+    lengths = np.zeros((len(bootstrappings), len(alphas)))
     for run in range(runs):
         for b_idx, bootstrapping in enumerate(bootstrappings):
             for a_idx, alpha in enumerate(alphas):
+                estimator = Estimator(alpha=alpha, trace=trace)
                 for episode in range(episodes):
                     print(
                         '\r run: {}, {}: {}, alpha: {}, episode: {}'.format(
-                            run, bootstrapping_descriptor, 
+                            run, bootstrapping_type, 
                             bootstrapping, alpha, episode), end="")
-                    n_steps, _ = algorithm(bootstrapping, env=env, estimator=estimator)
-                    steps[b_idx, a_idx] += n_steps
+                    episode_length, _ = algorithm(bootstrapping, env=env, estimator=estimator)
+                    lengths[b_idx, a_idx] += episode_length
     
     # average over independent runs and episodes
-    steps /= runs * episodes
+    lengths /= runs * episodes
     
     # truncate high step values for better display
-    steps[steps > truncate_steps] = truncate_steps
+    lengths[lengths > truncate_length] = truncate_length
 
     plt.figure()
     for b_idx in range(len(bootstrappings)):
-        plt.plot(alphas, steps[b_idx, :], 
-            label='{}: {}'.format(boostrapping_destriptor, bootstrappings[b_idx]))
+        plt.plot(alphas, lengths[b_idx, :], 
+            label='{}: {}'.format(boostrapping_type, bootstrappings[b_idx]))
     plt.xlabel('alpha * number of tilings(8)')
     plt.ylabel('Average steps per episode')
-    plt.ylim(140, truncate_steps - 100)
+    plt.ylim(140, truncate_length - 100)
     plt.legend()
