@@ -1,13 +1,9 @@
 gym
-tensorflow
 numpy
 pandas
 matplotlib
 scipy
-sklearn
 JSAnimation
 psutil
-atari-py
 ffmpeg-python
 jupyter
-keras
