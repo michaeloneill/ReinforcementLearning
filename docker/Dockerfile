@@ -24,13 +24,13 @@ RUN     useradd -m -s /bin/bash -N -u $NB_UID $NB_USER  && \
 	echo "umask g+rwx" >> /root/.bashrc && \
 	echo "umask g+rwx" >> $HOME/.bashrc
 
+# Setup correct permissions on important folders in docker container
+RUN     mkdir /src
+RUN     chown -R $NB_USER:$NB_GROUP /src
+RUN     chmod -R g+rw /src
+
 USER $NB_USER
 
-# Setup correct permissions on important folders in docker container
-RUN     mkdir $HOME/src
-RUN     chown -R $NB_USER:$NB_GROUP $HOME/src
-RUN     chmod -R g+rw $HOME/src
-
-WORKDIR $HOME/src/
+WORKDIR /src/
 
 ENTRYPOINT bash
