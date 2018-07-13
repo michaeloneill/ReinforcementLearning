@@ -12,8 +12,8 @@ RUN    apt-get update && \
        pip3 install matplotlib && \
        pip3 install jupyter
 
-ENV    NB_USER rl_user
-ENV    NB_GROUP rl_users
+ENV    NB_USER ubuntu
+ENV    NB_GROUP ubuntu
 ENV    NB_UID 1000
 ENV    NB_GID 1001
 ENV    HOME /home/$NB_USER
