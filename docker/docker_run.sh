@@ -1,4 +1,4 @@
-nvidia-docker build -t rl_tutorials .
+docker build -t gym .
 
 # nvidia-docker run -it \
 #       -v /nfs_mount:/nfs_mount \
@@ -6,12 +6,11 @@ nvidia-docker build -t rl_tutorials .
 #       --name=michael_container \
 #       michael
 
-nvidia-docker run -it \
-	      -p 8888:8888 \
-	      -v /nfs_mount:/nfs_mount \
-	      -v /home/michael/Documents/Kheiron/malignancy_segmentation:/src/malignancy_segmentation \
-	      --env="DISPLAY" \
-	      --env="QT_X11_NO_MITSHM=1" \
-	      --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
-	      --name rl_tutorials_container_ipython \
-	      michael
+docker run -it \
+       -p 8888:8888 \
+       -v /Users/michaeloneill/Documents/RL:/src/RL \
+       --env="DISPLAY" \
+       --env="QT_X11_NO_MITSHM=1" \
+       --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+       --name gym_container \
+       gym

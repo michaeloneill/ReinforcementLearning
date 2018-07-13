@@ -1,18 +1,33 @@
-FROM openaigym:latest
+FROM openaigymbase:latest
 
 USER root
 
-RUN    pip install --upgrade pip && \
-       pip install gym && \
-       pip install numpy && \
-       pip install pandas && \
-       pip install matplotlib && \
-       pip install jupyter
+RUN    apt-get update && \
+       apt-get install -y python3-pip python3-dev && \
+       cd /usr/local/bin && \
+       ln -s /usr/bin/python3 python && \
+       pip3 install gym && \
+       pip3 install numpy && \
+       pip3 install pandas && \
+       pip3 install matplotlib && \
+       pip3 install jupyter
+
+ENV    NB_USER rl_user
+ENV    NB_GROUP rl_users
+ENV    NB_UID 1000
+ENV    NB_GID 1001
+ENV    HOME /home/$NB_USER
+
+RUN     useradd -m -s /bin/bash -N -u $NB_UID $NB_USER  && \
+        groupadd -g $NB_GID $NB_GROUP && \
+	usermod -g $NB_GROUP $NB_USER && \
+	echo "umask g+rwx" >> /root/.bashrc && \
+	echo "umask g+rwx" >> $HOME/.bashrc
 
 USER $NB_USER
 
-
 RUN  mkdir $HOME/src
 
-WORKDIR /src
+WORKDIR /src/
+
 ENTRYPOINT bash
