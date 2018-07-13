@@ -26,8 +26,11 @@ RUN     useradd -m -s /bin/bash -N -u $NB_UID $NB_USER  && \
 
 USER $NB_USER
 
-RUN  mkdir $HOME/src
+# Setup correct permissions on important folders in docker container
+RUN     mkdir $HOME/src
+RUN     chown -R $NB_USER:$NB_GROUP $HOME/src
+RUN     chmod -R g+rw $HOME/src
 
-WORKDIR /src/
+WORKDIR $HOME/src/
 
 ENTRYPOINT bash
