@@ -1,9 +1,0 @@
-gym
-numpy
-pandas
-matplotlib
-scipy
-JSAnimation
-psutil
-ffmpeg-python
-jupyter
